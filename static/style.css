@@ -1,6 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap');
-
-:root {
+﻿:root {
   --bg: #07090f;
   --surface: rgba(255, 255, 255, 0.04);
   --border: rgba(255, 255, 255, 0.08);
@@ -210,6 +208,9 @@ body.light select option {
 
 .chip { padding: 8px 12px; border-radius: 999px; font-weight: 600; font-size: 12px; }
 .chip.success { background: rgba(108, 241, 216, 0.14); color: var(--accent); border: 1px solid rgba(108, 241, 216, 0.5); }
+.chip.neutral { background: rgba(255, 255, 255, 0.08); color: var(--muted); border: 1px solid var(--border); }
+.chip.pending { background: rgba(255, 179, 71, 0.14); color: var(--accent-2); border: 1px solid rgba(255, 179, 71, 0.4); }
+.chip.error { background: rgba(255, 89, 100, 0.16); color: #ff8993; border: 1px solid rgba(255, 89, 100, 0.4); }
 
 @media (max-width: 720px) {
   .hero { flex-direction: column; align-items: flex-start; }
