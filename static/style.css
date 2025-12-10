@@ -167,6 +167,7 @@ body.light select option {
 .btn.ghost { border-color: rgba(255, 255, 255, 0.14); color: var(--text); }
 .btn.outline { border-color: var(--accent); color: var(--accent); background: rgba(108, 241, 216, 0.08); }
 .btn.sm { padding: 8px 10px; font-size: 13px; }
+.btn.danger { background: linear-gradient(135deg, #ff5f6d, #ff9966); color: #2b0c0f; border: none; box-shadow: 0 12px 38px rgba(255, 99, 118, 0.35); }
 
 .light .btn.primary { color: #0b3b26; box-shadow: 0 12px 30px rgba(15, 186, 129, 0.25); }
 .light .btn.ghost { border-color: rgba(17, 20, 32, 0.08); }

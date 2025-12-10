@@ -11,6 +11,9 @@
   const publishBtn = document.querySelector('[data-publish]');
   const clearBtn = document.querySelector('[data-clear]');
   let isConnected = false;
+  let periodicTimer = null;
+  let periodicActive = false;
+  let isPublishing = false;
 
   const setStatus = (state, label) => {
     if (!stateChip) return;
@@ -21,23 +24,43 @@
 
   setStatus('neutral', 'Status: Offline');
 
-  modeRadios.forEach((radio) => {
-    radio.addEventListener('change', (event) => {
-      const isPeriodic = event.target.value === 'periodic';
-      intervalField.classList.toggle('is-disabled', !isPeriodic);
-      if (intervalSelect) intervalSelect.disabled = !isPeriodic;
-    });
-  });
-
   if (stateChip) {
     stateChip.classList.add('neutral');
   }
 
+  const getMode = () => document.querySelector('input[name="mode"]:checked')?.value || 'once';
+
+  const setFieldLocks = (locked) => {
+    if (topicInput) topicInput.disabled = locked;
+    if (messageInput) messageInput.disabled = locked;
+    if (clearBtn) clearBtn.disabled = locked;
+    modeRadios.forEach((radio) => { radio.disabled = locked; });
+  };
+
+  const updateIntervalState = () => {
+    const isPeriodic = getMode() === 'periodic';
+    const shouldDisableInterval = !isPeriodic || periodicActive;
+    intervalField.classList.toggle('is-disabled', shouldDisableInterval);
+    if (intervalSelect) intervalSelect.disabled = shouldDisableInterval;
+  };
+
   const setPublishAvailability = () => {
     if (!publishBtn) return;
-    publishBtn.disabled = !isConnected;
+    if (periodicActive) {
+      publishBtn.disabled = false;
+      publishBtn.textContent = 'Stop';
+      publishBtn.classList.add('danger');
+      return;
+    }
+
+    const topicReady = (topicInput?.value.trim().length || 0) > 0;
+    const messageReady = (messageInput?.value.trim().length || 0) > 0;
+    publishBtn.classList.remove('danger');
+    publishBtn.textContent = isPublishing ? 'Publishing...' : 'Publish';
+    publishBtn.disabled = isPublishing || !isConnected || !topicReady || !messageReady;
   };
   setPublishAvailability();
+  updateIntervalState();
 
   if (themeToggle) {
     themeToggle.addEventListener('click', () => {
@@ -89,7 +112,27 @@
     });
   }
 
-  const publishMessage = async () => {
+  const sendPublish = async (topic, message) => {
+    try {
+      const response = await fetch('/api/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic, message })
+      });
+      const payload = await response.json();
+      if (response.ok && payload.ok) {
+        setStatus('success', periodicActive ? 'Periodic publishing...' : 'Message published');
+        return true;
+      }
+      setStatus('error', payload.error ? `Error: ${payload.error}` : 'Failed to publish');
+      return false;
+    } catch (err) {
+      setStatus('error', 'Network error');
+      return false;
+    }
+  };
+
+  const publishOnce = async () => {
     if (!publishBtn || !topicInput || !messageInput) return;
     if (!isConnected) {
       setStatus('error', 'Connect to the broker first');
@@ -103,43 +146,101 @@
       topicInput.focus();
       return;
     }
-
-    const originalLabel = publishBtn.textContent;
-    publishBtn.disabled = true;
-    publishBtn.textContent = 'Publishing...';
-    try {
-      const response = await fetch('/api/publish', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, message })
-      });
-      const payload = await response.json();
-      if (response.ok && payload.ok) {
-        setStatus('success', 'Message published');
-      } else {
-        setStatus('error', payload.error ? `Error: ${payload.error}` : 'Failed to publish');
-      }
-    } catch (err) {
-      setStatus('error', 'Network error');
-    } finally {
-      publishBtn.textContent = originalLabel;
-      setPublishAvailability();
+    if (!message.trim()) {
+      setStatus('error', 'Message is required');
+      messageInput.focus();
+      return;
     }
+
+    isPublishing = true;
+    setPublishAvailability();
+    await sendPublish(topic, message);
+    isPublishing = false;
+    setPublishAvailability();
+  };
+
+  const stopPeriodic = () => {
+    if (periodicTimer) {
+      clearInterval(periodicTimer);
+      periodicTimer = null;
+    }
+    periodicActive = false;
+    setFieldLocks(false);
+    updateIntervalState();
+    setPublishAvailability();
+    setStatus('neutral', 'Periodic stopped');
+  };
+
+  const startPeriodic = async () => {
+    if (!topicInput || !messageInput) return;
+    if (!isConnected) {
+      setStatus('error', 'Connect to the broker first');
+      return;
+    }
+    const topic = topicInput.value.trim();
+    const message = messageInput.value;
+    if (!topic) {
+      setStatus('error', 'Topic is required');
+      topicInput.focus();
+      return;
+    }
+    if (!message.trim()) {
+      setStatus('error', 'Message is required');
+      messageInput.focus();
+      return;
+    }
+
+    const intervalSeconds = Number(intervalSelect?.value || 0) || 10;
+    const intervalMs = intervalSeconds * 1000;
+
+    periodicActive = true;
+    setFieldLocks(true);
+    updateIntervalState();
+    setPublishAvailability();
+    setStatus('pending', 'Starting periodic send...');
+
+    const tick = async () => { await sendPublish(topic, message); };
+    await tick();
+    periodicTimer = setInterval(tick, intervalMs);
   };
 
   if (publishBtn) {
     publishBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      publishMessage();
+      const mode = getMode();
+      if (periodicActive) {
+        stopPeriodic();
+        return;
+      }
+      if (mode === 'periodic') {
+        startPeriodic();
+      } else {
+        publishOnce();
+      }
     });
   }
 
   if (clearBtn) {
     clearBtn.addEventListener('click', (e) => {
       e.preventDefault();
+      if (periodicActive) return;
       if (topicInput) topicInput.value = '';
       if (messageInput) messageInput.value = '';
       (topicInput || messageInput)?.focus();
+      setPublishAvailability();
     });
   }
+
+  modeRadios.forEach((radio) => {
+    radio.addEventListener('change', (event) => {
+      event.preventDefault();
+      updateIntervalState();
+      setPublishAvailability();
+    });
+  });
+
+  [topicInput, messageInput].forEach((input) => {
+    if (!input) return;
+    input.addEventListener('input', setPublishAvailability);
+  });
 });
