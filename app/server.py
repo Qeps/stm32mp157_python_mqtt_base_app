@@ -21,21 +21,21 @@ def create_app():
         except Exception as exc:
             return jsonify({"ok": False, "error": str(exc)}), 400
 
-        @app.post("/api/publish")
-        def api_publish():
-            data = request.get_json(silent=True) or {}
-            topic = (data.get("topic") or "").strip()
-            message = data.get("message") or ""
+    @app.post("/api/publish")
+    def api_publish():
+        data = request.get_json(silent=True) or {}
+        topic = (data.get("topic") or "").strip()
+        message = data.get("message") or ""
 
-            if not topic:
-                return jsonify({"ok": False, "error": "Topic required"}), 400
-            if not mqtt_client.connected:
-                return jsonify({"ok": False, "error": "Not connected to broker"}), 400
-            try:
-                mqtt_client.publish(topic, message)
-                return jsonify({"ok": True, "status": "published"})
-            except Exception as exc:
-                return jsonify({"ok": False, "error": str(exc)}), 400
+        if not topic:
+            return jsonify({"ok": False, "error": "Topic required"}), 400
+        if not mqtt_client.connected:
+            return jsonify({"ok": False, "error": "Not connected to broker"}), 400
+        try:
+            mqtt_client.publish(topic, message)
+            return jsonify({"ok": True, "status": "published"})
+        except Exception as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
 
     return app
 
