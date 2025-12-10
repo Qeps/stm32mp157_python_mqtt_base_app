@@ -1,1 +1,146 @@
-<!-- Base -->
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MQTT Studio</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="bg-pattern"></div>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">MQTT Control</p>
+        <h1>Command Deck</h1>
+      </div>
+      <div class="hero-actions">
+        <button class="btn primary" data-theme-toggle>Light theme</button>
+      </div>
+    </header>
+
+    <section class="grid">
+      <article class="card">
+        <div class="card-head">
+          <div>
+            <p class="eyebrow">Connection</p>
+            <h2>MQTT Server</h2>
+          </div>
+          <span class="chip success" data-state>Status: Ready</span>
+        </div>
+        <label class="field">
+          <span>Server address</span>
+          <div class="with-action">
+            <input type="text" placeholder="mqtt://broker.hivemq.com:1883" />
+            <div class="actions">
+              <button class="btn primary">Connect</button>
+            </div>
+          </div>
+        </label>
+        <div class="hint">Enter full URL or IP address of the MQTT broker.</div>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <div>
+            <p class="eyebrow">Publishing</p>
+            <h2>Send message</h2>
+          </div>
+          <div class="mode-toggle" role="group" aria-label="Send mode">
+            <label>
+              <input type="radio" name="mode" value="once" checked />
+              <span>Single</span>
+            </label>
+            <label>
+              <input type="radio" name="mode" value="periodic" />
+              <span>Periodic</span>
+            </label>
+          </div>
+        </div>
+        <div class="two-cols">
+          <label class="field">
+            <span>Publish topic</span>
+            <input type="text" placeholder="e.g. test/send" />
+          </label>
+          <label class="field interval-field is-disabled">
+            <span>Interval</span>
+            <div class="select-wrap">
+              <select disabled>
+                <option>1 s</option>
+                <option>5 s</option>
+                <option selected>10 s</option>
+                <option>15 s</option>
+                <option>1 min</option>
+                <option>2 min</option>
+                <option>3 min</option>
+              </select>
+            </div>
+          </label>
+        </div>
+        <label class="field">
+          <span>Message</span>
+          <textarea rows="4" placeholder="Type the message to send..."></textarea>
+        </label>
+        <div class="actions end">
+          <button class="btn ghost">Clear</button>
+          <button class="btn primary">Publish</button>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <div>
+            <p class="eyebrow">Subscription</p>
+            <h2>Monitor topic</h2>
+          </div>
+          <button class="btn outline">Subscribe</button>
+        </div>
+        <label class="field">
+          <span>Subscribed topic</span>
+          <input type="text" placeholder="e.g. test/received" />
+        </label>
+        <div class="pill-row">
+          <span class="pill">telemetry/#</span>
+          <span class="pill">sensors/temperature</span>
+          <span class="pill">alerts/critical</span>
+        </div>
+      </article>
+
+      <article class="card stretch">
+        <div class="card-head">
+          <div>
+            <p class="eyebrow">Overview</p>
+            <h2>Messages</h2>
+          </div>
+          <div class="legend">
+            <span class="dot sent"></span> Sent
+            <span class="dot received"></span> Received
+          </div>
+        </div>
+        <div class="log-grid">
+          <div class="log">
+            <div class="log-head">
+              <h3>Sent messages</h3>
+              <button class="btn ghost sm">Save log</button>
+            </div>
+            <ul>
+              <li><span class="badge">test/send</span><p>Test payload: send.</p><time>12:02</time></li>
+            </ul>
+          </div>
+          <div class="log">
+            <div class="log-head">
+              <h3>Received</h3>
+              <button class="btn ghost sm">Save log</button>
+            </div>
+            <ul>
+              <li class="incoming"><span class="badge">test/received</span><p>Test payload: received.</p><time>12:04</time></li>
+            </ul>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
