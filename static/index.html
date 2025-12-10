@@ -52,7 +52,7 @@
               <span>Single</span>
             </label>
             <label>
-              <input type="radio" name="mode" value="periodic" />
+              <input type="radio" name="mode" value="periodic" disabled />
               <span>Periodic</span>
             </label>
           </div>
@@ -60,7 +60,7 @@
         <div class="two-cols">
           <label class="field">
             <span>Publish topic</span>
-            <input type="text" placeholder="e.g. test/send" />
+            <input type="text" placeholder="e.g. test/send" data-topic />
           </label>
           <label class="field interval-field is-disabled">
             <span>Interval</span>
@@ -79,11 +79,11 @@
         </div>
         <label class="field">
           <span>Message</span>
-          <textarea rows="4" placeholder="Type the message to send..."></textarea>
+          <textarea rows="4" placeholder="Type the message to send..." data-message></textarea>
         </label>
         <div class="actions end">
-          <button class="btn ghost">Clear</button>
-          <button class="btn primary">Publish</button>
+          <button class="btn ghost" data-clear>Clear</button>
+          <button class="btn primary" data-publish disabled>Publish</button>
         </div>
       </article>
 
