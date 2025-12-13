@@ -197,15 +197,20 @@ body.light select option {
 .dot.received { background: var(--accent-2); }
 
 .log-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
-.log { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: 12px; padding: 12px; min-height: 220px; }
+.log { background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: 12px; padding: 12px; min-height: 220px; max-height: 420px; display: flex; flex-direction: column; gap: 8px; }
 .log-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .log h3 { margin: 0; font-size: 15px; letter-spacing: -0.2px; }
-.log ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.log ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; flex: 1; overflow-y: auto; min-height: 0; padding-right: 6px; }
 .log li { padding: 10px; border-radius: 10px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: baseline; }
 .log li.incoming { background: rgba(255, 179, 71, 0.06); border-color: rgba(255, 179, 71, 0.3); }
 .log p { margin: 0; color: var(--text); }
 .log time { color: var(--muted); font-size: 12px; }
 .badge { display: inline-flex; padding: 4px 10px; border-radius: 999px; font-size: 12px; background: rgba(108, 160, 255, 0.16); color: #caddff; }
+
+body.light .log { background: rgba(17, 20, 32, 0.02); }
+body.light .log li { background: rgba(17, 20, 32, 0.06); border-color: rgba(17, 20, 32, 0.08); }
+body.light .log li.incoming { background: rgba(255, 179, 71, 0.14); border-color: rgba(255, 179, 71, 0.32); }
+body.light .badge { background: rgba(40, 86, 200, 0.16); color: #1b2d66; }
 
 .chip { padding: 8px 12px; border-radius: 999px; font-weight: 600; font-size: 12px; }
 .chip.success { background: rgba(108, 241, 216, 0.14); color: var(--accent); border: 1px solid rgba(108, 241, 216, 0.5); }
