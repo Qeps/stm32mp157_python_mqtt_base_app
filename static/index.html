@@ -93,17 +93,13 @@
             <p class="eyebrow">Subscription</p>
             <h2>Monitor topic</h2>
           </div>
-          <button class="btn outline">Subscribe</button>
+          <button class="btn outline" data-subscribe-btn>Subscribe</button>
         </div>
         <label class="field">
           <span>Subscribed topic</span>
-          <input type="text" placeholder="e.g. test/received" />
+          <input type="text" placeholder="e.g. telemetry/#" data-subscribe-input />
         </label>
-        <div class="pill-row">
-          <span class="pill">telemetry/#</span>
-          <span class="pill">sensors/temperature</span>
-          <span class="pill">alerts/critical</span>
-        </div>
+        <div class="pill-row" data-subscription-list></div>
       </article>
 
       <article class="card stretch">
@@ -121,20 +117,16 @@
           <div class="log">
             <div class="log-head">
               <h3>Sent messages</h3>
-              <button class="btn ghost sm">Save log</button>
+              <button class="btn ghost sm" disabled>Save log</button>
             </div>
-            <ul>
-              <li><span class="badge">test/send</span><p>Test payload: send.</p><time>12:02</time></li>
-            </ul>
+            <ul data-log-sent></ul>
           </div>
           <div class="log">
             <div class="log-head">
               <h3>Received</h3>
-              <button class="btn ghost sm">Save log</button>
+              <button class="btn ghost sm" disabled>Save log</button>
             </div>
-            <ul>
-              <li class="incoming"><span class="badge">test/received</span><p>Test payload: received.</p><time>12:04</time></li>
-            </ul>
+            <ul data-log-received></ul>
           </div>
         </div>
       </article>

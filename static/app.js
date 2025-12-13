@@ -10,10 +10,17 @@
   const messageInput = document.querySelector('[data-message]');
   const publishBtn = document.querySelector('[data-publish]');
   const clearBtn = document.querySelector('[data-clear]');
+  const subscribeBtn = document.querySelector('[data-subscribe-btn]');
+  const subscribeInput = document.querySelector('[data-subscribe-input]');
+  const subscriptionList = document.querySelector('[data-subscription-list]');
+  const logSentList = document.querySelector('[data-log-sent]');
+  const logReceivedList = document.querySelector('[data-log-received]');
   let isConnected = false;
   let periodicTimer = null;
   let periodicActive = false;
   let isPublishing = false;
+  let subscriptions = [];
+  let logTimer = null;
 
   const setStatus = (state, label) => {
     if (!stateChip) return;
@@ -21,6 +28,7 @@
     stateChip.classList.remove('success', 'neutral', 'pending', 'error');
     stateChip.classList.add(state);
   };
+  const setConnectedStatus = () => setStatus('success', 'Status: Connected');
 
   setStatus('neutral', 'Status: Offline');
 
@@ -42,6 +50,30 @@
     const shouldDisableInterval = !isPeriodic || periodicActive;
     intervalField.classList.toggle('is-disabled', shouldDisableInterval);
     if (intervalSelect) intervalSelect.disabled = shouldDisableInterval;
+  };
+
+  const setSubscribeAvailability = () => {
+    if (!subscribeBtn) return;
+    const topicReady = (subscribeInput?.value.trim().length || 0) > 0;
+    subscribeBtn.disabled = !isConnected || !topicReady;
+  };
+
+  const renderSubscriptions = () => {
+    if (!subscriptionList) return;
+    subscriptionList.innerHTML = '';
+    if (!subscriptions.length) {
+      const hint = document.createElement('span');
+      hint.className = 'pill';
+      hint.textContent = 'No topics yet';
+      subscriptionList.appendChild(hint);
+      return;
+    }
+    subscriptions.forEach((topic) => {
+      const pill = document.createElement('span');
+      pill.className = 'pill';
+      pill.textContent = topic;
+      subscriptionList.appendChild(pill);
+    });
   };
 
   const setPublishAvailability = () => {
@@ -69,6 +101,48 @@
     });
   }
 
+  const formatTime = (isoString) => {
+    const d = new Date(isoString);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const renderLogs = (logs) => {
+    const renderList = (target, items, incoming = false) => {
+      if (!target) return;
+      target.innerHTML = '';
+      if (!items || !items.length) {
+        const empty = document.createElement('li');
+        empty.textContent = 'No messages yet';
+        empty.style.color = 'var(--muted)';
+        target.appendChild(empty);
+        return;
+      }
+      items.forEach((item) => {
+        const li = document.createElement('li');
+        if (incoming) li.classList.add('incoming');
+
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.textContent = item.topic;
+
+        const body = document.createElement('p');
+        body.textContent = item.payload;
+
+        const time = document.createElement('time');
+        time.textContent = formatTime(item.time);
+
+        li.appendChild(badge);
+        li.appendChild(body);
+        li.appendChild(time);
+        target.appendChild(li);
+      });
+    };
+
+    renderList(logSentList, logs.sent);
+    renderList(logReceivedList, logs.received, true);
+  };
+
   const connect = async () => {
     if (!brokerInput || !connectBtn) return;
     const broker = brokerInput.value.trim();
@@ -90,7 +164,10 @@
       const payload = await response.json();
       if (response.ok && payload.ok) {
         isConnected = true;
-        setStatus('success', 'Status: Connected');
+        setConnectedStatus();
+        await loadSubscriptions();
+        await loadLogs();
+        startLogPolling();
       } else {
         isConnected = false;
         setStatus('error', payload.error ? `Error: ${payload.error}` : 'Failed to connect');
@@ -102,6 +179,7 @@
       connectBtn.disabled = false;
       connectBtn.textContent = originalLabel;
       setPublishAvailability();
+      setSubscribeAvailability();
     }
   };
 
@@ -121,7 +199,8 @@
       });
       const payload = await response.json();
       if (response.ok && payload.ok) {
-        setStatus('success', periodicActive ? 'Periodic publishing...' : 'Message published');
+        setConnectedStatus();
+        await loadLogs();
         return true;
       }
       setStatus('error', payload.error ? `Error: ${payload.error}` : 'Failed to publish');
@@ -168,7 +247,11 @@
     setFieldLocks(false);
     updateIntervalState();
     setPublishAvailability();
-    setStatus('neutral', 'Periodic stopped');
+    if (isConnected) {
+      setConnectedStatus();
+    } else {
+      setStatus('neutral', 'Status: Offline');
+    }
   };
 
   const startPeriodic = async () => {
@@ -243,4 +326,94 @@
     if (!input) return;
     input.addEventListener('input', setPublishAvailability);
   });
+
+  if (subscribeInput) {
+    subscribeInput.addEventListener('input', setSubscribeAvailability);
+  }
+
+  const startLogPolling = () => {
+    if (logTimer) clearInterval(logTimer);
+    logTimer = setInterval(() => {
+      if (isConnected) {
+        loadLogs();
+      }
+    }, 4000);
+  };
+
+  const loadLogs = async () => {
+    try {
+      const response = await fetch('/api/logs');
+      const payload = await response.json();
+      if (response.ok && payload.ok && payload.logs) {
+        renderLogs(payload.logs);
+      }
+    } catch (err) {
+      // silent fail, keep UI as-is
+    }
+  };
+
+  const loadSubscriptions = async () => {
+    try {
+      const response = await fetch('/api/subscriptions');
+      const payload = await response.json();
+      if (response.ok && payload.ok) {
+        subscriptions = payload.topics || [];
+        renderSubscriptions();
+        setSubscribeAvailability();
+      }
+    } catch (err) {
+      // ignore fetch errors silently for initial load
+    }
+  };
+
+  const addSubscription = async () => {
+    if (!subscribeBtn || !subscribeInput) return;
+    const topic = subscribeInput.value.trim();
+    if (!topic) {
+      setStatus('error', 'Topic is required');
+      subscribeInput.focus();
+      return;
+    }
+    if (!isConnected) {
+      setStatus('error', 'Connect to the broker first');
+      return;
+    }
+    subscribeBtn.disabled = true;
+    const originalLabel = subscribeBtn.textContent;
+    subscribeBtn.textContent = 'Subscribing...';
+    try {
+      const response = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic })
+      });
+      const payload = await response.json();
+      if (response.ok && payload.ok) {
+        subscriptions = payload.topics || [];
+        renderSubscriptions();
+        subscribeInput.value = '';
+        setConnectedStatus();
+        await loadLogs();
+      } else {
+        setStatus('error', payload.error ? `Error: ${payload.error}` : 'Failed to subscribe');
+      }
+    } catch (err) {
+      setStatus('error', 'Network error');
+    } finally {
+      subscribeBtn.textContent = originalLabel;
+      subscribeBtn.disabled = false;
+      setSubscribeAvailability();
+    }
+  };
+
+  if (subscribeBtn) {
+    subscribeBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      addSubscription();
+    });
+  }
+
+  renderSubscriptions();
+  setSubscribeAvailability();
+  loadLogs();
 });
