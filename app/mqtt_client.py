@@ -1,7 +1,8 @@
 ﻿import threading
+from collections import deque
+from datetime import datetime
 from urllib.parse import urlparse
 import paho.mqtt.client as mqtt
-
 
 class MqttClient:
     def __init__(self):
@@ -9,6 +10,12 @@ class MqttClient:
         self.connected = False
         self.last_error = None
         self._connect_event = threading.Event()
+        self._subscriptions = set()
+        self._logs_lock = threading.Lock()
+        self._logs = {
+            "sent": deque(maxlen=200),
+            "received": deque(maxlen=200),
+        }
 
     def connect_url(self, url, keepalive=60):
         parsed = urlparse(url if "://" in url else f"mqtt://{url}")
@@ -20,13 +27,25 @@ class MqttClient:
         self._connect_event.clear()
         self.connected = False
         self.last_error = None
+        self._subscriptions.clear()
+        with self._logs_lock:
+            self._logs["sent"].clear()
+            self._logs["received"].clear()
 
         def on_connect(client, userdata, flags, rc):
             self.connected = rc == 0
             self.last_error = None if self.connected else mqtt.connack_string(rc)
             self._connect_event.set()
 
+        def on_message(client, userdata, msg):
+            self._append_log(
+                "received",
+                topic=msg.topic,
+                payload=msg.payload.decode(errors="ignore"),
+            )
+
         self.client.on_connect = on_connect
+        self.client.on_message = on_message
         self.client.connect(host, port, keepalive)
         self.client.loop_start()
 
@@ -39,5 +58,36 @@ class MqttClient:
     def publish(self, topic, message):
         if self.connected:
             self.client.publish(topic, message)
+            self._append_log("sent", topic=topic, payload=message)
         else:
             raise RuntimeError("MQTT client not connected")
+
+    def subscribe(self, topic):
+        if not topic:
+            raise ValueError("Topic required")
+        if not self.connected:
+            raise RuntimeError("MQTT client not connected")
+        result, _ = self.client.subscribe(topic)
+        if result != mqtt.MQTT_ERR_SUCCESS:
+            raise RuntimeError(f"Subscribe failed ({result})")
+        self._subscriptions.add(topic)
+        return list(self._subscriptions)
+
+    def list_subscriptions(self):
+        return list(self._subscriptions)
+
+    def get_logs(self):
+        with self._logs_lock:
+            return {
+                "sent": list(self._logs["sent"]),
+                "received": list(self._logs["received"]),
+            }
+
+    def _append_log(self, direction, topic, payload):
+        entry = {
+            "topic": topic,
+            "payload": payload,
+            "time": datetime.utcnow().isoformat() + "Z",
+        }
+        with self._logs_lock:
+            self._logs[direction].appendleft(entry)
