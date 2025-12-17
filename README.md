@@ -9,10 +9,11 @@ Lightweight web tool for testing MQTT brokers - Flask backend with a single-page
 - Sent/received logs with UTC timestamps and direction tags.
 - Static UI served by Flask - runs in any browser, nothing to install on the client.
 
-## Screenshots (placeholders)
-- [full UI screenshot]
-- [UI screenshot with received message]
-- [terminal screenshot with subscription output]
+## Screenshots
+<img width="1557" height="787" alt="mainUIpart1" src="https://github.com/user-attachments/assets/58bce311-8426-4540-8ad2-962383b7301f" />
+<img width="1523" height="737" alt="mainUIpart2" src="https://github.com/user-attachments/assets/c8432bed-1764-4f89-86ab-3c9d8c41d332" />
+<img width="1580" height="624" alt="593435688_1184599920450024_5034510601861845838_n" src="https://github.com/user-attachments/assets/88dfe36f-288f-4c9d-b90a-e24c4d644474" />
+<img width="556" height="767" alt="593991935_1269462811875348_983846594040829029_n" src="https://github.com/user-attachments/assets/8af4fbc0-8568-433f-a751-811fe131f82e" />
 
 ## Project layout
 - `main.py` - entry point starting the Flask app.
