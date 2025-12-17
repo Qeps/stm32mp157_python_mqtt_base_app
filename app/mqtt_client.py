@@ -7,6 +7,10 @@ import paho.mqtt.client as mqtt
 class MqttClient:
     def __init__(self):
         self.client = mqtt.Client()
+        #switch to (if you use it with paho 2.0>)
+        #self.client = mqtt.Client(
+        #    callback_api_version=mqtt.CallbackAPIVersion.VERSION1
+        #)
         self.connected = False
         self.last_error = None
         self._connect_event = threading.Event()
