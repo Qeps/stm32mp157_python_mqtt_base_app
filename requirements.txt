@@ -1,1 +1,3 @@
-base
+Flask==2.3.3
+paho-mqtt==1.6.1
+PyInstaller==6.3.0
