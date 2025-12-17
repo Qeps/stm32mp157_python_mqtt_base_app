@@ -27,9 +27,12 @@ Lightweight web tool for testing MQTT brokers - Flask backend with a single-page
 - Publish messages (single/periodic) and subscribe to topics; sent/received logs update live.
 
 ## Accessing on STM32MP157
+- If you use paho higher version over 2.0 uncomment lines in mqtt_client.py.
 - Determine the board IP (e.g., `ip addr show` -> look for `inet 192.168.x.y`).
 - From a device on the same network, open `http://<board-ip>:5000/` in a browser.
 - If using USB RNDIS/ECM, the host typically sees the board at a link-local IP (e.g., `192.168.7.x`); use that address with port 5000.
+![linux](https://github.com/user-attachments/assets/e4da167e-cba6-4458-8843-962472999712)
+
 
 ## Requirements
 - Python 3.9+.
